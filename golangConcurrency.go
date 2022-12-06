@@ -1,24 +1,49 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 func main() {
-	// declaring the variable which is an ASCII value of A
-	var startingASCIINumber int = 64
+	letter, number := make(chan bool), make(chan bool)
 
-	fmt.Println("Printing the alphabets from A to Z using a loop.")
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() { // goroutine for alphabet
 
-	// printing the Alphabet from A to Z using for loop and
-	// ASCII value concept
-	for i := 1; i <= 26; i++ {
-		fmt.Print(i)
-		fmt.Print(i + 1)
-		fmt.Print(string(rune(startingASCIINumber + i)))
-		i++
-		fmt.Print(string(rune(startingASCIINumber + i)))
+		for ch := 'A'; ch < 'Z'; ch += 2 {
+			letter <- true
+			fmt.Print(string(ch))
+			fmt.Print(string(ch + 1))
+			<-number
 
-		if i == 26 {
-			fmt.Print(2728)
 		}
-	}
+		close(letter)
+	}()
+
+	go func() {
+		start := 1
+		for {
+			number <- true
+
+			fmt.Print(start)
+			fmt.Print(start + 1)
+			start += 2
+
+			_, ok := <-letter
+			if ok == false {
+				break
+			}
+		}
+		wg.Done()
+	}()
+	////////// inside the main()
+
+	<-number
+
+	wg.Wait()
+	fmt.Print("\n")
+
 }
+
